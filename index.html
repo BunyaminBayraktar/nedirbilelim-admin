@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nedir Bilelim — Admin Paneli</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap');
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; font-family:'Nunito Sans',sans-serif; color:#fff;
+    background:
+      radial-gradient(ellipse 900px 600px at 85% -10%, rgba(124,58,237,0.35), transparent 60%),
+      radial-gradient(ellipse 700px 500px at -10% 110%, rgba(56,189,248,0.22), transparent 60%),
+      linear-gradient(160deg, #16213e 0%, #1a1a2e 55%, #0f3460 100%);
+  }
+  h1{font-family:'Fredoka',sans-serif; font-weight:700; font-size:clamp(22px,5vw,30px); margin:0 0 20px 0; text-align:center;
+     background:linear-gradient(90deg,#c084fc,#38bdf8); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  h2{font-family:'Fredoka',sans-serif; font-weight:600; font-size:18px; margin:24px 0 12px;}
+
+  /* --- Login ekranı --- */
+  #loginScreen{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .login-card{background:#23263a; border:1px solid #2f3350; border-radius:20px; padding:32px 28px; width:100%; max-width:360px;}
+  .login-card h1{margin-bottom:24px;}
+  .field{margin-bottom:14px;}
+  label{display:block; font-size:13px; font-weight:700; color:#cbd5e1; margin-bottom:6px;}
+  input[type=email], input[type=password], input[type=text], input[type=number]{
+    width:100%; padding:11px 13px; border-radius:10px; border:1.5px solid #3a3f5c; background:#181c2f; color:#fff;
+    font-size:15px; font-family:inherit;
+  }
+  input:focus{outline:none; border-color:#7c3aed;}
+  button{
+    border:none; border-radius:999px; padding:12px 22px; font-family:'Fredoka',sans-serif; font-weight:600; font-size:15px;
+    cursor:pointer; color:#fff;
+  }
+  button.primary{background:linear-gradient(90deg,#5b21b6,#0369a1); width:100%; margin-top:6px;}
+  button.primary:disabled{opacity:0.6; cursor:not-allowed;}
+  .msg{font-size:14px; line-height:1.5; margin-top:14px; padding:11px 13px; border-radius:10px;}
+  .msg.error{background:#3a1420; color:#fca5a5;}
+  .hidden{display:none !important;}
+
+  /* --- Panel --- */
+  #adminScreen{max-width:900px; margin:0 auto; padding:28px 16px 64px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:12px;}
+  .topbar h1{margin:0;}
+  .logout{background:#3a1420; color:#fca5a5; padding:8px 16px; font-size:13px; border-radius:999px; border:none; cursor:pointer; white-space:nowrap;}
+  .box{background:#23263a; border:1px solid #2f3350; border-radius:16px; padding:18px 20px; margin-bottom:20px;}
+  .search-row{display:flex; gap:10px; align-items:center;}
+  .search-row input{flex:1;}
+  .clear-search{background:none; color:#38bdf8; font-size:13px; padding:0; white-space:nowrap;}
+  .form-grid{display:grid; grid-template-columns:1fr; gap:10px;}
+  .form-actions{display:flex; gap:10px; margin-top:4px;}
+  button.secondary{background:#3a3f5c; flex:0 0 auto;}
+  button.add{background:linear-gradient(90deg,#5b21b6,#0369a1); flex:1;}
+
+  .count-label{color:#cbd5e1; font-size:14px; margin-bottom:10px;}
+  .empty-msg{color:#94a3b8; font-size:14px;}
+
+  .group-header{
+    display:flex; align-items:center; justify-content:space-between; cursor:pointer;
+    padding:10px 14px; border-radius:10px; font-weight:700; margin-bottom:6px;
+  }
+  .group-header.complete{background:#14532d; color:#bbf7d0;}
+  .group-header.incomplete{background:#78350f; color:#fde68a;}
+  .group-missing{font-weight:400; font-size:12px; opacity:0.85; margin-top:2px;}
+  .group-items{margin:6px 0 18px 0;}
+
+  .q-item{background:#1c2036; border:1px solid #2b2f4a; border-radius:10px; padding:12px 14px; margin-bottom:10px;}
+  .q-text{font-size:15px; line-height:1.5;}
+  .q-letter{font-weight:800; color:#c084fc;}
+  .q-answers{font-size:13px; color:#a5b4fc; margin-top:4px;}
+  .q-actions{display:flex; gap:8px; margin-top:8px;}
+  .q-actions button{padding:6px 14px; font-size:13px; border-radius:8px;}
+  .edit-btn{background:#38bdf8;}
+  .del-btn{background:#ef4444;}
+
+  footer{text-align:center; color:#716d8a; font-size:12px; margin-top:32px;}
+</style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <h1>Admin Paneli</h1>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">E-posta</label>
+          <input type="email" id="loginEmail" required autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="loginPassword">Şifre</label>
+          <input type="password" id="loginPassword" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="primary" id="loginBtn">Giriş Yap</button>
+      </form>
+      <div id="loginMsg"></div>
+    </div>
+  </div>
+
+  <!-- PANEL -->
+  <div id="adminScreen" class="hidden">
+    <div class="topbar">
+      <h1>Nedir Bilelim — Sorular</h1>
+      <button class="logout" id="logoutBtn">Çıkış Yap</button>
+    </div>
+
+    <div class="box">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Soru veya cevapta ara (harf ya da test no da olur)" autocomplete="off">
+      </div>
+      <button class="clear-search hidden" id="clearSearchBtn">Aramayı temizle</button>
+    </div>
+
+    <div class="box">
+      <div class="form-grid">
+        <div class="field"><label>Harf</label><input type="text" id="fLetter" placeholder="örn: A"></div>
+        <div class="field"><label>Soru</label><input type="text" id="fQuestion"></div>
+        <div class="field"><label>Cevaplar (virgülle ayır)</label><input type="text" id="fAnswers"></div>
+        <div class="field"><label>Test No</label><input type="number" id="fTestNo"></div>
+      </div>
+      <div class="form-actions">
+        <button class="add" id="submitBtn">Ekle</button>
+        <button class="secondary hidden" id="cancelEditBtn">Vazgeç</button>
+      </div>
+    </div>
+
+    <h2 id="listTitle">Sorular</h2>
+    <div id="loadingMsg" class="empty-msg">Yükleniyor…</div>
+    <div id="resultsContainer"></div>
+
+    <footer>© 2026 Nedir Bilelim</footer>
+  </div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyAaygqvkDPhX0Xx5SP2vyyfUYF7JQ1rc-M",
+    authDomain: "jdypassaparola.firebaseapp.com",
+    projectId: "jdypassaparola",
+    storageBucket: "jdypassaparola.appspot.com",
+    messagingSenderId: "336994139357",
+    appId: "1:336994139357:web:a0e34e073571d8c9beaf34"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var auth = firebase.auth();
+  var db = firebase.firestore();
+
+  var ALPHABET = ['A','B','C','Ç','D','E','F','G','H','I','J','K','L','M','N','O','P','R','S','Ş','T','U','V','Y','Z'];
+  var MIN_QUESTIONS_PER_TEST = 25;
+  var SEARCH_DEBOUNCE_MS = 200;
+
+  var questions = [];      // Firestore'dan çekilen tüm sorular
+  var searchIndex = [];    // her sorunun küçük harfli arama metniyle birlikte hâli
+  var editId = null;
+  var openTestNo = null;
+  var searchDebounceTimer = null;
+
+  // --- yardımcılar ---
+  function turkishLower(str) {
+    return (str || '').replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
+  }
+  function escapeHtml(str) {
+    return (str == null ? '' : String(str))
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function $(id) { return document.getElementById(id); }
+
+  // ================= LOGIN =================
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = $('loginEmail').value.trim();
+    var password = $('loginPassword').value;
+    var btn = $('loginBtn');
+    var msg = $('loginMsg');
+    msg.innerHTML = '';
+    btn.disabled = true;
+    btn.textContent = 'Giriş yapılıyor…';
+    auth.signInWithEmailAndPassword(email, password).catch(function (err) {
+      msg.innerHTML = '<div class="msg error">Giriş başarısız: ' + escapeHtml(err.message) + '</div>';
+    }).finally(function () {
+      btn.disabled = false;
+      btn.textContent = 'Giriş Yap';
+    });
+  });
+
+  $('logoutBtn').addEventListener('click', function () {
+    auth.signOut();
+  });
+
+  auth.onAuthStateChanged(function (user) {
+    if (!user) {
+      $('loginScreen').classList.remove('hidden');
+      $('adminScreen').classList.add('hidden');
+      return;
+    }
+    db.collection('Users').doc(user.uid).get().then(function (snap) {
+      var role = snap.exists ? snap.data().role : null;
+      if (role !== 'admin') {
+        $('loginMsg').innerHTML = '<div class="msg error">Bu hesabın admin yetkisi yok.</div>';
+        auth.signOut();
+        return;
+      }
+      $('loginScreen').classList.add('hidden');
+      $('adminScreen').classList.remove('hidden');
+      fetchQuestions();
+    }).catch(function (err) {
+      $('loginMsg').innerHTML = '<div class="msg error">Yetki kontrolü başarısız: ' + escapeHtml(err.message) + '</div>';
+      auth.signOut();
+    });
+  });
+
+  // ================= VERİ ÇEKME =================
+  function fetchQuestions() {
+    $('loadingMsg').classList.remove('hidden');
+    $('resultsContainer').innerHTML = '';
+    return db.collection('Questions').get({ source: 'server' }).then(function (snap) {
+      questions = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      rebuildSearchIndex();
+      $('loadingMsg').classList.add('hidden');
+      render();
+    }).catch(function (err) {
+      $('loadingMsg').textContent = 'Yüklenemedi: ' + err.message;
+    });
+  }
+
+  function rebuildSearchIndex() {
+    searchIndex = questions.map(function (q) {
+      return Object.assign({}, q, {
+        _search: turkishLower(q.question_text) + ' ' + (q.answers || []).map(turkishLower).join(' ')
+      });
+    });
+  }
+
+  // ================= ARAMA =================
+  $('searchInput').addEventListener('input', function () {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(render, SEARCH_DEBOUNCE_MS);
+    $('clearSearchBtn').classList.toggle('hidden', $('searchInput').value.trim() === '');
+  });
+  $('clearSearchBtn').addEventListener('click', function () {
+    $('searchInput').value = '';
+    $('clearSearchBtn').classList.add('hidden');
+    render();
+  });
+
+  function getSearchResults() {
+    var raw = $('searchInput').value.trim();
+    var normalized = turkishLower(raw);
+    if (!normalized) return null;
+    var isLetterQuery = raw.length === 1 && ALPHABET.indexOf(raw.toUpperCase()) !== -1;
+    if (isLetterQuery) {
+      return searchIndex.filter(function (q) { return turkishLower(q.letter) === normalized; });
+    }
+    return searchIndex.filter(function (q) {
+      return q._search.indexOf(normalized) !== -1 || String(q.test_no) === raw;
+    });
+  }
+
+  // ================= RENDER =================
+  function render() {
+    var results = getSearchResults();
+    var container = $('resultsContainer');
+    container.innerHTML = '';
+
+    if (results !== null) {
+      $('listTitle').textContent = 'Arama sonuçları (' + results.length + ')';
+      if (results.length === 0) {
+        container.innerHTML = '<div class="empty-msg">Eşleşen soru bulunamadı.</div>';
+        return;
+      }
+      results.forEach(function (item) {
+        container.appendChild(renderQuestionRow(item, true));
+      });
+      return;
+    }
+
+    $('listTitle').textContent = 'Sorular';
+    var groups = {};
+    questions.forEach(function (q) {
+      var key = q.test_no || 0;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(q);
+    });
+    var testNos = Object.keys(groups).map(Number).sort(function (a, b) { return a - b; });
+
+    testNos.forEach(function (testNo) {
+      var items = groups[testNo];
+      var usedLetters = {};
+      items.forEach(function (q) { usedLetters[q.letter] = true; });
+      var missingLetters = ALPHABET.filter(function (l) { return !usedLetters[l]; });
+      var isOpen = openTestNo === testNo;
+
+      var groupWrap = document.createElement('div');
+
+      var header = document.createElement('div');
+      header.className = 'group-header ' + (missingLetters.length > 0 ? 'incomplete' : 'complete');
+      header.innerHTML =
+        'Test No: ' + testNo + ' (' + items.length + ' soru)' +
+        (missingLetters.length > 0 ? '<div class="group-missing">Eksik harfler: ' + missingLetters.join(', ') + '</div>' : '') +
+        '<span style="float:right">' + (isOpen ? '▲' : '▼') + '</span>';
+      header.addEventListener('click', function () {
+        openTestNo = isOpen ? null : testNo;
+        render();
+      });
+      groupWrap.appendChild(header);
+
+      if (isOpen) {
+        var itemsWrap = document.createElement('div');
+        itemsWrap.className = 'group-items';
+        items.forEach(function (item) { itemsWrap.appendChild(renderQuestionRow(item, false)); });
+        groupWrap.appendChild(itemsWrap);
+      }
+
+      container.appendChild(groupWrap);
+    });
+  }
+
+  function renderQuestionRow(item, showTestNo) {
+    var row = document.createElement('div');
+    row.className = 'q-item';
+    row.innerHTML =
+      '<div class="q-text"><span class="q-letter">' + escapeHtml(item.letter) + '</span>' +
+      (showTestNo ? ' (test no ' + escapeHtml(item.test_no) + ')' : '') +
+      ' - ' + escapeHtml(item.question_text) + '</div>' +
+      '<div class="q-answers">Cevaplar: ' + escapeHtml((item.answers || []).join(', ')) + '</div>' +
+      '<div class="q-actions">' +
+      '<button class="edit-btn" data-action="edit">Düzenle</button>' +
+      '<button class="del-btn" data-action="delete">Sil</button>' +
+      '</div>';
+    row.querySelector('[data-action="edit"]').addEventListener('click', function () { handleEdit(item); });
+    row.querySelector('[data-action="delete"]').addEventListener('click', function () { handleDelete(item.id); });
+    return row;
+  }
+
+  // ================= CRUD =================
+  function syncSingleTestNoCount(testNo, questionCount) {
+    var ref = db.collection('Tests').doc(String(testNo));
+    return ref.get().then(function (snap) {
+      var nowIso = new Date().toISOString();
+      var payload = {
+        test_no: testNo,
+        question_count: questionCount,
+        is_active: questionCount >= MIN_QUESTIONS_PER_TEST,
+        updated_at: nowIso
+      };
+      if (!snap.exists) {
+        payload.title = 'Test ' + testNo;
+        payload.description = testNo + '. test';
+        payload.created_at = nowIso;
+      }
+      return ref.set(payload, { merge: true });
+    });
+  }
+
+  $('submitBtn').addEventListener('click', function () {
+    var letter = $('fLetter').value.trim().toUpperCase();
+    var questionText = $('fQuestion').value.trim();
+    var answersRaw = $('fAnswers').value.trim();
+    var testNoRaw = $('fTestNo').value.trim();
+
+    if (!letter || !questionText || !answersRaw || !testNoRaw) {
+      alert('Tüm alanları doldurun.');
+      return;
+    }
+    var testNo = Number(testNoRaw);
+    var payload = {
+      letter: letter,
+      question_text: questionText,
+      answers: answersRaw.split(',').map(function (a) { return a.trim(); }),
+      test_no: testNo,
+      created_at: new Date().toISOString()
+    };
+
+    var btn = $('submitBtn');
+    btn.disabled = true;
+
+    var chain;
+    var affectedTestNos = [];
+    if (editId) {
+      var previous = questions.find(function (q) { return q.id === editId; });
+      chain = db.collection('Questions').doc(editId).update(payload).then(function () {
+        var updated = Object.assign({ id: editId }, payload);
+        questions = questions.map(function (q) { return q.id === editId ? updated : q; });
+        if (previous && Number(previous.test_no) !== testNo) {
+          affectedTestNos = [Number(previous.test_no), testNo];
+        }
+      });
+    } else {
+      chain = db.collection('Questions').add(payload).then(function (docRef) {
+        questions = questions.concat([Object.assign({ id: docRef.id }, payload)]);
+        affectedTestNos = [testNo];
+      });
+    }
+
+    chain.then(function () {
+      rebuildSearchIndex();
+      return Promise.all(affectedTestNos.map(function (tn) {
+        var count = questions.filter(function (q) { return Number(q.test_no) === tn; }).length;
+        return syncSingleTestNoCount(tn, count);
+      }));
+    }).then(function () {
+      resetForm();
+      render();
+    }).catch(function (err) {
+      alert('Kayıt işlemi başarısız: ' + err.message);
+    }).finally(function () {
+      btn.disabled = false;
+    });
+  });
+
+  function handleDelete(id) {
+    if (!confirm('Bu soruyu silmek istediğinize emin misiniz?')) return;
+    var target = questions.find(function (q) { return q.id === id; });
+    db.collection('Questions').doc(id).delete().then(function () {
+      questions = questions.filter(function (q) { return q.id !== id; });
+      rebuildSearchIndex();
+      if (target) {
+        var testNo = Number(target.test_no);
+        var count = questions.filter(function (q) { return Number(q.test_no) === testNo; }).length;
+        return syncSingleTestNoCount(testNo, count);
+      }
+    }).then(function () {
+      render();
+    }).catch(function (err) {
+      alert('Silme işlemi başarısız: ' + err.message);
+    });
+  }
+
+  function handleEdit(item) {
+    editId = item.id;
+    $('fLetter').value = item.letter;
+    $('fQuestion').value = item.question_text;
+    $('fAnswers').value = (item.answers || []).join(',');
+    $('fTestNo').value = item.test_no;
+    $('submitBtn').textContent = 'Güncelle';
+    $('cancelEditBtn').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetForm() {
+    editId = null;
+    $('fLetter').value = '';
+    $('fQuestion').value = '';
+    $('fAnswers').value = '';
+    $('fTestNo').value = '';
+    $('submitBtn').textContent = 'Ekle';
+    $('cancelEditBtn').classList.add('hidden');
+  }
+
+  $('cancelEditBtn').addEventListener('click', resetForm);
+})();
+</script>
+</body>
+</html>
