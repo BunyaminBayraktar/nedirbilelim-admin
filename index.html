@@ -54,6 +54,9 @@
   button.secondary{background:#3a3f5c; flex:0 0 auto;}
   button.add{background:linear-gradient(90deg,#5b21b6,#0369a1); flex:1;}
 
+  .cache-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:-4px 0 12px;}
+  #cacheInfo{color:#94a3b8; font-size:12px;}
+  .refresh-btn{background:#23263a; color:#38bdf8; border:1px solid #38bdf8; padding:6px 12px; font-size:12px; border-radius:8px;}
   .count-label{color:#cbd5e1; font-size:14px; margin-bottom:10px;}
   .empty-msg{color:#94a3b8; font-size:14px;}
 
@@ -130,6 +133,7 @@
     </div>
 
     <h2 id="listTitle">Sorular</h2>
+    <div class="cache-row"><span id="cacheInfo"></span><button class="refresh-btn" id="refreshBtn">Sunucudan yenile</button></div>
     <div id="loadingMsg" class="empty-msg">Yükleniyor…</div>
     <div id="resultsContainer"></div>
 
@@ -220,18 +224,64 @@
   });
 
   // ================= VERİ ÇEKME =================
-  function fetchQuestions() {
+  // Soru listesi (~6000 soru) tarayıcıda saklanır: her açılışta sunucudan çekmek ~6000
+  // okuma harcıyordu (ücretsiz plan günde 50.000). Panelden yapılan ekle/düzenle/sil
+  // kayıtlı listeye de yazılır; başka yerden yapılan değişiklikler için "Sunucudan yenile".
+  var CACHE_KEY = 'admin_questions_v1';
+
+  function showCacheInfo(savedAt) {
+    $('cacheInfo').textContent = savedAt
+      ? 'Tarayıcıdaki liste · ' + new Date(savedAt).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+      : '';
+  }
+
+  function saveCache() {
+    var savedAt = Date.now();
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: savedAt, questions: questions }));
+    } catch (e) {
+      savedAt = null; // depolama dolu/kapalıysa önbelleksiz devam
+    }
+    showCacheInfo(savedAt);
+  }
+
+  function loadCache() {
+    try {
+      var cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      return cached && Array.isArray(cached.questions) ? cached : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function fetchQuestions(forceServer) {
+    var cached = forceServer ? null : loadCache();
+    if (cached) {
+      questions = cached.questions;
+      rebuildSearchIndex();
+      $('loadingMsg').classList.add('hidden');
+      showCacheInfo(cached.savedAt);
+      render();
+      return Promise.resolve();
+    }
     $('loadingMsg').classList.remove('hidden');
+    $('loadingMsg').textContent = 'Yükleniyor…';
     $('resultsContainer').innerHTML = '';
+    $('refreshBtn').disabled = true;
     return db.collection('Questions').get({ source: 'server' }).then(function (snap) {
       questions = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
       rebuildSearchIndex();
+      saveCache();
       $('loadingMsg').classList.add('hidden');
       render();
     }).catch(function (err) {
       $('loadingMsg').textContent = 'Yüklenemedi: ' + err.message;
+    }).finally(function () {
+      $('refreshBtn').disabled = false;
     });
   }
+
+  $('refreshBtn').addEventListener('click', function () { fetchQuestions(true); });
 
   function rebuildSearchIndex() {
     searchIndex = questions.map(function (q) {
@@ -404,6 +454,7 @@
 
     chain.then(function () {
       rebuildSearchIndex();
+      saveCache();
       return Promise.all(affectedTestNos.map(function (tn) {
         var count = questions.filter(function (q) { return Number(q.test_no) === tn; }).length;
         return syncSingleTestNoCount(tn, count);
@@ -424,6 +475,7 @@
     db.collection('Questions').doc(id).delete().then(function () {
       questions = questions.filter(function (q) { return q.id !== id; });
       rebuildSearchIndex();
+      saveCache();
       if (target) {
         var testNo = Number(target.test_no);
         var count = questions.filter(function (q) { return Number(q.test_no) === testNo; }).length;
