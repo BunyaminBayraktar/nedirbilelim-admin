@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nedir Bilelim — Raporlar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap');
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; font-family:'Nunito Sans',sans-serif; color:#fff;
+    background:
+      radial-gradient(ellipse 900px 600px at 85% -10%, rgba(124,58,237,0.35), transparent 60%),
+      radial-gradient(ellipse 700px 500px at -10% 110%, rgba(56,189,248,0.22), transparent 60%),
+      linear-gradient(160deg, #16213e 0%, #1a1a2e 55%, #0f3460 100%);
+    background-attachment: fixed;
+  }
+  h1{font-family:'Fredoka',sans-serif; font-weight:700; font-size:clamp(22px,5vw,30px); margin:0;
+     background:linear-gradient(90deg,#c084fc,#38bdf8); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  h2{font-family:'Fredoka',sans-serif; font-weight:600; font-size:18px; margin:28px 0 12px;}
+  a{color:#38bdf8;}
+  .hidden{display:none !important;}
+
+  #page{max-width:1100px; margin:0 auto; padding:28px 16px 64px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:20px;}
+  .nav{display:flex; gap:8px; align-items:center;}
+  .nav a, .nav button{font-family:'Fredoka',sans-serif; font-weight:600; font-size:13px; padding:8px 16px; border-radius:999px;
+    text-decoration:none; border:none; cursor:pointer;}
+  .nav a{background:#23263a; color:#cbd5e1; border:1px solid #2f3350;}
+  .nav button{background:#3a1420; color:#fca5a5;}
+
+  .ranges{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
+  .ranges button{font-family:'Fredoka',sans-serif; font-weight:600; font-size:14px; padding:9px 18px; border-radius:999px;
+    border:1px solid #2f3350; background:#23263a; color:#cbd5e1; cursor:pointer;}
+  .ranges button.active{background:linear-gradient(90deg,#5b21b6,#0369a1); color:#fff; border-color:transparent;}
+  .range-label{color:#94a3b8; font-size:13px; margin-bottom:18px;}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:12px;}
+  .card{background:#23263a; border:1px solid #2f3350; border-radius:16px; padding:16px 18px;}
+  .card .label{color:#94a3b8; font-size:13px; font-weight:700;}
+  .card .value{font-family:'Fredoka',sans-serif; font-size:30px; font-weight:700; margin-top:6px; line-height:1.1;}
+  .card .sub{color:#94a3b8; font-size:12px; margin-top:4px;}
+  .card.accent .value{color:#c084fc;}
+  .card.blue .value{color:#38bdf8;}
+  .card.green .value{color:#4ade80;}
+  .card.amber .value{color:#fbbf24;}
+
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:720px){ .split{grid-template-columns:1fr;} }
+  .box{background:#23263a; border:1px solid #2f3350; border-radius:16px; padding:18px 20px;}
+  .box h3{font-family:'Fredoka',sans-serif; font-weight:600; font-size:16px; margin:0 0 12px;}
+  .rows .row{display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #2f3350; font-size:14px;}
+  .rows .row:last-child{border-bottom:none;}
+  .rows .row b{font-family:'Fredoka',sans-serif; font-size:16px;}
+
+  .chart-box{position:relative; height:280px;}
+
+  .table-wrap{overflow-x:auto; border-radius:16px; border:1px solid #2f3350;}
+  table{width:100%; border-collapse:collapse; background:#23263a; font-size:13px; min-width:760px;}
+  th, td{padding:10px 12px; text-align:left; border-bottom:1px solid #2f3350; white-space:nowrap;}
+  th{background:#1c2036; color:#94a3b8; font-weight:700; position:sticky; top:0;}
+  td.num, th.num{text-align:right;}
+  tr:last-child td{border-bottom:none;}
+  .tag{display:inline-block; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px;}
+  .tag.user{background:rgba(74,222,128,0.15); color:#4ade80;}
+  .tag.guest{background:rgba(148,163,184,0.15); color:#cbd5e1;}
+  .muted{color:#94a3b8;}
+
+  .msg{font-size:14px; line-height:1.5; margin:20px 0; padding:14px 16px; border-radius:12px; background:#23263a; border:1px solid #2f3350;}
+  .msg.error{background:#3a1420; color:#fca5a5; border-color:#5b1d2c;}
+  .note{color:#716d8a; font-size:12px; margin-top:24px; line-height:1.6;}
+</style>
+</head>
+<body>
+<div id="page">
+  <div class="topbar">
+    <h1>Nedir Bilelim — Raporlar</h1>
+    <div class="nav">
+      <a href="./">Sorular</a>
+      <button id="logoutBtn" class="hidden">Çıkış Yap</button>
+    </div>
+  </div>
+
+  <div id="gate" class="msg">Yükleniyor…</div>
+
+  <div id="report" class="hidden">
+    <div class="ranges" id="ranges"></div>
+    <div class="range-label" id="rangeLabel"></div>
+
+    <div class="grid">
+      <div class="card accent"><div class="label">Aktif cihaz</div><div class="value" id="kActiveDevices">–</div><div class="sub">uygulamayı açan cihazlar</div></div>
+      <div class="card green"><div class="label">Giriş yapmış kullanıcı</div><div class="value" id="kSignedIn">–</div><div class="sub">farklı hesap</div></div>
+      <div class="card"><div class="label">Misafir cihaz</div><div class="value" id="kGuests">–</div><div class="sub">giriş yapmadan kullanan</div></div>
+      <div class="card blue"><div class="label">Oyun oynayan cihaz</div><div class="value" id="kPlaying">–</div><div class="sub" id="kPlayingSub"></div></div>
+      <div class="card amber"><div class="label">Uygulamada geçen süre</div><div class="value" id="kTime">–</div><div class="sub" id="kTimeSub"></div></div>
+      <div class="card"><div class="label">Oturum</div><div class="value" id="kSessions">–</div><div class="sub" id="kSessionsSub"></div></div>
+      <div class="card green"><div class="label">Şu an çevrimiçi</div><div class="value" id="kOnline">–</div><div class="sub">giriş yapmış kullanıcı</div></div>
+      <div class="card accent"><div class="label">Kayıtlı kullanıcı</div><div class="value" id="kTotalUsers">–</div><div class="sub" id="kNewUsers"></div></div>
+    </div>
+
+    <h2>Günlük eğilim (son 14 gün)</h2>
+    <div class="box"><div class="chart-box"><canvas id="trendChart"></canvas></div></div>
+
+    <h2>Ayrıntılar</h2>
+    <div class="split">
+      <div class="box">
+        <h3>Oyunlar</h3>
+        <div class="rows" id="gamesRows"></div>
+      </div>
+      <div class="box">
+        <h3>Reklamlar ve ipuçları</h3>
+        <div class="rows" id="adsRows"></div>
+      </div>
+    </div>
+
+    <h2 id="devicesTitle">Cihazlar</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kullanıcı</th><th>Cihaz</th><th class="num">Gün</th><th class="num">Oturum</th>
+            <th class="num">Süre</th><th class="num">Oyun</th><th class="num">Reklam</th><th>Son görülme</th>
+          </tr>
+        </thead>
+        <tbody id="devicesBody"></tbody>
+      </table>
+    </div>
+
+    <p class="note">
+      Kullanım verileri (cihaz, süre, oyun, reklam) uygulamanın raporlama eklenen sürümünden itibaren toplanır;
+      daha eski sürümü kullananlar bu sayılara girmez. Süre, uygulamanın ekranda açık olduğu süredir.
+      Banner reklam sayısı yüklenen (gösterilen) banner sayısıdır; ödüllü reklam sayısı sonuna kadar izlenip ödül alınanlardır.
+    </p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js';
+import {
+  getFirestore, collection, doc, getDoc, getDocs, getCountFromServer, query, where, Timestamp,
+} from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
+import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js';
+
+const app = initializeApp({
+  apiKey: 'AIzaSyAaygqvkDPhX0Xx5SP2vyyfUYF7JQ1rc-M',
+  authDomain: 'jdypassaparola.firebaseapp.com',
+  projectId: 'jdypassaparola',
+  storageBucket: 'jdypassaparola.appspot.com',
+  messagingSenderId: '336994139357',
+  appId: '1:336994139357:web:a0e34e073571d8c9beaf34',
+  databaseURL: 'https://jdypassaparola-default-rtdb.europe-west1.firebasedatabase.app',
+});
+const auth = getAuth(app);
+const db = getFirestore(app);
+const rtdb = getDatabase(app);
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (n) => (n == null ? '–' : Number(n).toLocaleString('tr-TR'));
+const pad = (n) => String(n).padStart(2, '0');
+const dateKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const dayKeyOffset = (offset) => { const d = new Date(); d.setDate(d.getDate() + offset); return dateKey(d); };
+const startOfDay = (key) => { const [y, m, d] = key.split('-').map(Number); return new Date(y, m - 1, d); };
+const shortDate = (key) => startOfDay(key).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+const duration = (sec) => {
+  const s = Math.max(0, Math.round(sec || 0));
+  const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60);
+  if (h) return `${h} sa ${m} dk`;
+  if (m) return `${m} dk`;
+  return `${s} sn`;
+};
+const sumMap = (m) => Object.values(m || {}).reduce((t, n) => t + (Number(n) || 0), 0);
+const sum = (rows, pick) => rows.reduce((t, r) => t + (Number(pick(r)) || 0), 0);
+
+const RANGES = {
+  today: { label: 'Bugün', from: 0, to: 0 },
+  yesterday: { label: 'Dün', from: -1, to: -1 },
+  week: { label: 'Son 7 gün', from: -6, to: 0 },
+  month: { label: 'Son 30 gün', from: -29, to: 0 },
+};
+let currentRange = 'today';
+let chart = null;
+
+$('ranges').innerHTML = Object.entries(RANGES)
+  .map(([key, r]) => `<button data-range="${key}">${r.label}</button>`).join('');
+$('ranges').addEventListener('click', (e) => {
+  const key = e.target?.dataset?.range;
+  if (key && key !== currentRange) { currentRange = key; loadReport(); }
+});
+$('logoutBtn').addEventListener('click', () => signOut(auth).then(() => { location.href = './'; }));
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    $('gate').innerHTML = 'Raporları görmek için <a href="./">admin paneline giriş yap</a>.';
+    return;
+  }
+  try {
+    const snap = await getDoc(doc(db, 'Users', user.uid));
+    if (snap.data()?.role !== 'admin') {
+      $('gate').className = 'msg error';
+      $('gate').textContent = 'Bu hesabın admin yetkisi yok.';
+      return;
+    }
+  } catch (err) {
+    $('gate').className = 'msg error';
+    $('gate').textContent = 'Yetki kontrolü başarısız: ' + err.message;
+    return;
+  }
+  $('gate').classList.add('hidden');
+  $('report').classList.remove('hidden');
+  $('logoutBtn').classList.remove('hidden');
+  loadReport();
+});
+
+const countOnlineNow = async () => {
+  try {
+    const snap = await get(ref(rtdb, 'status'));
+    return Object.values(snap.val() || {}).filter((s) => s?.state === 'online').length;
+  } catch (e) {
+    return null;
+  }
+};
+
+// Activity satırlarını cihaz bazında birleştir (çok günlü aralıklarda)
+const groupByDevice = (rows) => {
+  const map = new Map();
+  rows.forEach((r) => {
+    const d = map.get(r.deviceId) || {
+      deviceId: r.deviceId, days: new Set(), uids: new Set(), names: new Set(),
+      platform: r.platform, model: r.model, osVersion: r.osVersion, appVersion: r.appVersion,
+      sessions: 0, seconds: 0, games: 0, ads: 0, lastSeen: 0,
+    };
+    d.days.add(r.date);
+    (r.uids || []).forEach((u) => d.uids.add(u));
+    if (r.username) d.names.add(r.username);
+    d.sessions += Number(r.sessions) || 0;
+    d.seconds += Number(r.seconds) || 0;
+    d.games += sumMap(r.games);
+    d.ads += sumMap(r.ads);
+    const seen = r.lastSeen?.toMillis ? r.lastSeen.toMillis() : 0;
+    if (seen > d.lastSeen) {
+      d.lastSeen = seen; d.model = r.model || d.model; d.appVersion = r.appVersion || d.appVersion;
+      d.osVersion = r.osVersion || d.osVersion;
+    }
+    map.set(r.deviceId, d);
+  });
+  return [...map.values()].sort((a, b) => b.seconds - a.seconds);
+};
+
+async function loadReport() {
+  const range = RANGES[currentRange];
+  document.querySelectorAll('#ranges button').forEach((b) => b.classList.toggle('active', b.dataset.range === currentRange));
+  const fromKey = dayKeyOffset(range.from);
+  const toKey = dayKeyOffset(range.to);
+  $('rangeLabel').textContent = fromKey === toKey
+    ? startOfDay(fromKey).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' })
+    : `${shortDate(fromKey)} – ${shortDate(toKey)}`;
+  $('devicesBody').innerHTML = '<tr><td colspan="8" class="muted">Yükleniyor…</td></tr>';
+
+  try {
+    const [activitySnap, summarySnap, totalUsers, newUsers, online] = await Promise.all([
+      getDocs(query(collection(db, 'Activity'), where('date', '>=', fromKey), where('date', '<=', toKey))),
+      getDocs(query(collection(db, 'DailySummary'), where('date', '>=', dayKeyOffset(-13)))),
+      getCountFromServer(collection(db, 'Users')).then((s) => s.data().count).catch(() => null),
+      getCountFromServer(query(collection(db, 'Users'),
+        where('createdAt', '>=', Timestamp.fromDate(startOfDay(fromKey))),
+        where('createdAt', '<', Timestamp.fromDate(new Date(startOfDay(toKey).getTime() + 86400000)))))
+        .then((s) => s.data().count).catch(() => null),
+      countOnlineNow(),
+    ]);
+
+    const rows = activitySnap.docs.map((d) => d.data());
+    const devices = groupByDevice(rows);
+    const signedIn = new Set(rows.flatMap((r) => r.uids || []));
+    const totalSeconds = sum(rows, (r) => r.seconds);
+    const sessions = sum(rows, (r) => r.sessions);
+    const playing = devices.filter((d) => d.games > 0).length;
+
+    $('kActiveDevices').textContent = fmt(devices.length);
+    $('kSignedIn').textContent = fmt(signedIn.size);
+    $('kGuests').textContent = fmt(devices.filter((d) => d.uids.size === 0).length);
+    $('kPlaying').textContent = fmt(playing);
+    $('kPlayingSub').textContent = devices.length ? `aktif cihazların %${Math.round((playing / devices.length) * 100)}'i` : '';
+    $('kTime').textContent = duration(totalSeconds);
+    $('kTimeSub').textContent = devices.length ? `cihaz başına ort. ${duration(totalSeconds / devices.length)}` : '';
+    $('kSessions').textContent = fmt(sessions);
+    $('kSessionsSub').textContent = sessions ? `oturum başına ort. ${duration(totalSeconds / sessions)}` : '';
+    $('kOnline').textContent = online == null ? '–' : fmt(online);
+    $('kTotalUsers').textContent = fmt(totalUsers);
+    $('kNewUsers').textContent = newUsers == null ? '' : `bu aralıkta ${fmt(newUsers)} yeni kayıt`;
+
+    const games = {
+      'Normal oyun': sum(rows, (r) => r.games?.classic),
+      'Günün Meydan Okuması': sum(rows, (r) => r.games?.daily),
+      'Hızlı Mod': sum(rows, (r) => r.games?.rush),
+      'Arkadaşa meydan okuma': sum(rows, (r) => r.games?.challenge),
+    };
+    const totalGames = Object.values(games).reduce((a, b) => a + b, 0);
+    $('gamesRows').innerHTML = Object.entries(games).map(([k, v]) => `<div class="row"><span>${k}</span><b>${fmt(v)}</b></div>`).join('')
+      + `<div class="row"><span><b>Toplam</b></span><b>${fmt(totalGames)}</b></div>`;
+
+    const adsRows = {
+      'Geçiş reklamı (oyun sonu)': sum(rows, (r) => r.ads?.interstitial),
+      'Ödüllü reklam (izlenip tamamlanan)': sum(rows, (r) => r.ads?.rewarded),
+      'Banner gösterimi': sum(rows, (r) => r.ads?.banner),
+      'Kullanılan ipucu': sum(rows, (r) => r.hints),
+      'Giriş (oturum açma)': sum(rows, (r) => r.logins),
+      'Yeni kayıt (uygulamadan)': sum(rows, (r) => r.signups),
+    };
+    $('adsRows').innerHTML = Object.entries(adsRows).map(([k, v]) => `<div class="row"><span>${k}</span><b>${fmt(v)}</b></div>`).join('');
+
+    $('devicesTitle').textContent = `Cihazlar (${devices.length})`;
+    $('devicesBody').innerHTML = devices.length ? devices.map((d) => {
+      const who = d.uids.size
+        ? `<span class="tag user">Üye</span> ${esc([...d.names].join(', ') || '—')}`
+        : '<span class="tag guest">Misafir</span>';
+      const device = `${esc(d.model || (d.platform === 'web' ? 'Web tarayıcı' : d.platform || '?'))}<div class="muted">${esc(d.platform || '')} ${esc(d.osVersion || '')}${d.appVersion ? ' · v' + esc(d.appVersion) : ''}</div>`;
+      const seen = d.lastSeen ? new Date(d.lastSeen).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '–';
+      return `<tr><td>${who}</td><td>${device}</td><td class="num">${d.days.size}</td><td class="num">${fmt(d.sessions)}</td>`
+        + `<td class="num">${duration(d.seconds)}</td><td class="num">${fmt(d.games)}</td><td class="num">${fmt(d.ads)}</td><td>${seen}</td></tr>`;
+    }).join('') : '<tr><td colspan="8" class="muted">Bu aralıkta veri yok.</td></tr>';
+
+    const summaries = new Map(summarySnap.docs.map((d) => [d.id, d.data()]));
+    const labels = []; const activeSeries = []; const minuteSeries = []; const gameSeries = [];
+    for (let o = -13; o <= 0; o += 1) {
+      const key = dayKeyOffset(o);
+      const s = summaries.get(key) || {};
+      labels.push(shortDate(key));
+      activeSeries.push(Number(s.activeDevices) || 0);
+      minuteSeries.push(Math.round((Number(s.seconds) || 0) / 60));
+      gameSeries.push(sumMap(s.games));
+    }
+    drawTrend(labels, activeSeries, gameSeries, minuteSeries);
+  } catch (err) {
+    $('devicesBody').innerHTML = `<tr><td colspan="8" class="muted">Veriler yüklenemedi: ${esc(err.message)}</td></tr>`;
+  }
+}
+
+function drawTrend(labels, active, games, minutes) {
+  const ctx = $('trendChart');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        { type: 'bar', label: 'Aktif cihaz', data: active, backgroundColor: 'rgba(192,132,252,0.75)', borderRadius: 6, yAxisID: 'y' },
+        { type: 'bar', label: 'Oyun', data: games, backgroundColor: 'rgba(56,189,248,0.65)', borderRadius: 6, yAxisID: 'y' },
+        { type: 'line', label: 'Süre (dk)', data: minutes, borderColor: '#fbbf24', backgroundColor: '#fbbf24', tension: 0.3, yAxisID: 'y1' },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#cbd5e1' } } },
+      scales: {
+        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.08)' } },
+        y: { beginAtZero: true, ticks: { color: '#94a3b8', precision: 0 }, grid: { color: 'rgba(148,163,184,0.08)' } },
+        y1: { beginAtZero: true, position: 'right', ticks: { color: '#fbbf24' }, grid: { display: false } },
+      },
+    },
+  });
+}
+</script>
+</body>
+</html>

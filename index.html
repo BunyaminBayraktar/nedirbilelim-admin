@@ -43,6 +43,7 @@
   #adminScreen{max-width:900px; margin:0 auto; padding:28px 16px 64px;}
   .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:12px;}
   .topbar h1{margin:0;}
+  .reports-link{background:#23263a; color:#cbd5e1; border:1px solid #2f3350; padding:8px 16px; font-size:13px; border-radius:999px; text-decoration:none; font-family:'Fredoka',sans-serif; font-weight:600; white-space:nowrap;}
   .logout{background:#3a1420; color:#fca5a5; padding:8px 16px; font-size:13px; border-radius:999px; border:none; cursor:pointer; white-space:nowrap;}
   .box{background:#23263a; border:1px solid #2f3350; border-radius:16px; padding:18px 20px; margin-bottom:20px;}
   .search-row{display:flex; gap:10px; align-items:center;}
@@ -102,7 +103,10 @@
   <div id="adminScreen" class="hidden">
     <div class="topbar">
       <h1>Nedir Bilelim — Sorular</h1>
-      <button class="logout" id="logoutBtn">Çıkış Yap</button>
+      <div style="display:flex; gap:8px;">
+        <a class="reports-link" href="raporlar.html">📊 Raporlar</a>
+        <button class="logout" id="logoutBtn">Çıkış Yap</button>
+      </div>
     </div>
 
     <div class="box">
