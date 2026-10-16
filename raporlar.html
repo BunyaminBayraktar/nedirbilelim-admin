@@ -253,7 +253,7 @@ const sum = (rows, pick) => rows.reduce((t, r) => t + (Number(pick(r)) || 0), 0)
 
 const SOURCE_LABELS = {
   'google-play': 'Google Play (mağaza)', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', whatsapp: 'WhatsApp',
-  twitter: 'X (Twitter)', facebook: 'Facebook', reklam: 'Ücretli reklam', davet: 'Arkadaş daveti', diger: 'Diğer',
+  twitter: 'X (Twitter)', facebook: 'Facebook', reklam: 'Ücretli reklam', davet: 'Arkadaş daveti', paylasim: 'Sonuç kartı paylaşımı', diger: 'Diğer',
   web: 'Web', bilinmiyor: 'Bilinmiyor',
 };
 const sourceLabel = (s) => SOURCE_LABELS[s] || s || 'Bilinmiyor';

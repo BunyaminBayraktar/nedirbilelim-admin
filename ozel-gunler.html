@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nedir Bilelim — Özel Günler</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap');
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; font-family:'Nunito Sans',sans-serif; color:#fff;
+    background:
+      radial-gradient(ellipse 900px 600px at 85% -10%, rgba(124,58,237,0.35), transparent 60%),
+      radial-gradient(ellipse 700px 500px at -10% 110%, rgba(56,189,248,0.22), transparent 60%),
+      linear-gradient(160deg, #16213e 0%, #1a1a2e 55%, #0f3460 100%);
+  }
+  .wrap{max-width:900px; margin:0 auto; padding:28px 16px 64px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap;}
+  h1{font-family:'Fredoka',sans-serif; font-weight:700; font-size:clamp(22px,5vw,28px); margin:0;
+     background:linear-gradient(90deg,#c084fc,#38bdf8); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  h2{font-family:'Fredoka',sans-serif; font-weight:600; font-size:18px; margin:0 0 12px;}
+  a.link{background:#23263a; color:#cbd5e1; border:1px solid #2f3350; padding:8px 16px; font-size:13px; border-radius:999px;
+    text-decoration:none; font-family:'Fredoka',sans-serif; font-weight:600; white-space:nowrap;}
+  .box{background:#23263a; border:1px solid #2f3350; border-radius:16px; padding:18px 20px; margin-bottom:20px;}
+  .hint{color:#94a3b8; font-size:13px; line-height:1.55; margin:0 0 12px;}
+  label{display:block; font-size:13px; font-weight:700; color:#cbd5e1; margin:10px 0 6px;}
+  input, textarea{width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid #3a3f5c; background:#181c2f; color:#fff;
+    font-size:14px; font-family:inherit;}
+  textarea{min-height:260px; font-family:ui-monospace,Consolas,monospace; font-size:13px; line-height:1.5;}
+  input:focus, textarea:focus{outline:none; border-color:#7c3aed;}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:0 14px;}
+  @media (max-width:600px){ .grid{grid-template-columns:1fr;} }
+  button{border:none; border-radius:999px; padding:11px 20px; font-family:'Fredoka',sans-serif; font-weight:600; font-size:14px;
+    cursor:pointer; color:#fff;}
+  button.primary{background:linear-gradient(90deg,#5b21b6,#0369a1);}
+  button.ghost{background:#3a3f5c;}
+  button.danger{background:#3a1420; color:#fca5a5;}
+  button:disabled{opacity:0.55; cursor:not-allowed;}
+  .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+  .msg{font-size:14px; line-height:1.5; padding:11px 13px; border-radius:10px; margin-top:12px;}
+  .msg.error{background:#3a1420; color:#fca5a5;}
+  .msg.ok{background:#0f2e1f; color:#86efac;}
+  .msg.warn{background:#3a2a10; color:#fcd34d;}
+  .hidden{display:none !important;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th, td{text-align:left; padding:8px 6px; border-bottom:1px solid #2f3350; vertical-align:top;}
+  th{color:#94a3b8; font-weight:700;}
+  .pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:800;}
+  .pill.open{background:#0f2e1f; color:#86efac;}
+  .pill.wait{background:#1e2a4a; color:#93c5fd;}
+  .pill.past{background:#2a2a35; color:#94a3b8;}
+  .letter{font-weight:900; color:#c084fc; width:34px;}
+  .ans{color:#a5b4fc;}
+  .row-actions{display:flex; gap:6px;}
+  .row-actions button{padding:6px 12px; font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>Özel Günler</h1>
+    <div style="display:flex; gap:8px;">
+      <a class="link" href="./">← Sorular</a>
+      <a class="link" href="raporlar.html">📊 Raporlar</a>
+    </div>
+  </div>
+
+  <div id="gate" class="msg warn">Yetki kontrol ediliyor...</div>
+
+  <div id="panel" class="hidden">
+    <div class="box">
+      <h2>Planlanan özel günler</h2>
+      <p class="hint">
+        O gün "Günün Meydan Okuması" normal test yerine buradaki soruları getirir; menüde buton bayrak kırmızısı olur,
+        paylaşım kartında özel günün adı yazar. Sorular o günün 00:00'ına kadar oyunculardan gizlidir.
+      </p>
+      <div id="list">Yükleniyor...</div>
+    </div>
+
+    <div class="box">
+      <h2 id="formTitle">Yeni özel gün</h2>
+      <div class="grid">
+        <div>
+          <label for="fDay">Tarih</label>
+          <input type="date" id="fDay">
+        </div>
+        <div>
+          <label for="fEmoji">Simge (emoji)</label>
+          <input type="text" id="fEmoji" maxlength="8" placeholder="🇹🇷">
+        </div>
+        <div>
+          <label for="fTitle">Başlık</label>
+          <input type="text" id="fTitle" maxlength="60" placeholder="29 Ekim Cumhuriyet Bayramı">
+        </div>
+        <div>
+          <label for="fChip">Kısa etiket (paylaşım kartında)</label>
+          <input type="text" id="fChip" maxlength="30" placeholder="29 Ekim Özel">
+        </div>
+      </div>
+      <label for="fSubtitle">Alt başlık</label>
+      <input type="text" id="fSubtitle" maxlength="90" placeholder="Cumhuriyet'in 103. yılına özel 25 soru">
+
+      <label for="fQuestions">Sorular — her satır: <code>HARF | soru metni | cevap1, cevap2</code></label>
+      <textarea id="fQuestions" spellcheck="false" placeholder="A | Türkiye Cumhuriyeti'nin başkenti | Ankara"></textarea>
+      <p class="hint" style="margin-top:8px;">
+        Oyundaki 25 harfin her biri için bir soru gerekir: A B C Ç D E F G H I/İ J K L M N O/Ö P R S Ş T U/Ü V Y Z (Ğ yok).
+        Cevap o harfle başlamalı; virgülle birden çok doğru cevap yazılabilir.
+      </p>
+
+      <div id="check"></div>
+      <div class="actions">
+        <button class="primary" id="saveBtn">Kaydet</button>
+        <button class="ghost" id="previewBtn">Kontrol Et</button>
+        <button class="ghost" id="draftBtn">29 Ekim taslağını doldur</button>
+        <button class="ghost hidden" id="cancelBtn">Yeni kayda dön</button>
+      </div>
+      <div id="formMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js';
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, serverTimestamp, Timestamp,
+} from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
+
+const app = initializeApp({
+  apiKey: 'AIzaSyAaygqvkDPhX0Xx5SP2vyyfUYF7JQ1rc-M',
+  authDomain: 'jdypassaparola.firebaseapp.com',
+  projectId: 'jdypassaparola',
+  storageBucket: 'jdypassaparola.appspot.com',
+  messagingSenderId: '336994139357',
+  appId: '1:336994139357:web:a0e34e073571d8c9beaf34',
+});
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = (id) => document.getElementById(id);
+
+// Oyundaki harfler (I-İ, O-Ö, U-Ü tek harf sayılır; Ğ yok)
+const GAME_LETTERS = ['A', 'B', 'C', 'Ç', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'Ş', 'T', 'U', 'V', 'Y', 'Z'];
+const GROUP = { 'İ': 'I', 'Ö': 'O', 'Ü': 'U' };
+const upper = (s) => String(s || '').trim().toLocaleUpperCase('tr-TR');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const DRAFT_29_EKIM = {
+  day: '2026-10-29',
+  emoji: '🇹🇷',
+  title: '29 Ekim Cumhuriyet Bayramı',
+  chip: '29 Ekim Özel',
+  subtitle: "Cumhuriyet'in 103. yılına özel 25 soru",
+  lines: [
+    "A | Türkiye Cumhuriyeti'nin başkenti; 13 Ekim 1923'te başkent ilan edildi | Ankara",
+    "B | 26 Ağustos 1922'de başlayan, Kurtuluş Savaşı'nın son büyük harekâtı | Büyük Taarruz",
+    "C | 29 Ekim 1923'te ilan edilen yönetim biçimi | Cumhuriyet",
+    "Ç | Mustafa Kemal'in 1915'te Anafartalar'da ün kazandığı, \"geçilmez\" diye anılan cephe | Çanakkale",
+    "D | Atatürk'ün 10 Kasım 1938'de hayata gözlerini yumduğu İstanbul'daki saray | Dolmabahçe, Dolmabahçe Sarayı",
+    "E | 23 Temmuz 1919'da Mustafa Kemal'in başkanlığında toplanan kongrenin yapıldığı şehir | Erzurum",
+    "F | 29 Ekim akşamı ellerde fenerlerle yapılan geleneksel kutlama yürüyüşü | Fener alayı",
+    "G | Sakarya Meydan Muharebesi'nin ardından TBMM'nin Mustafa Kemal'e verdiği unvan | Gazi",
+    "H | 3 Mart 1924'te kaldırılan, padişahların taşıdığı dinî liderlik makamı | Hilafet, Halifelik",
+    "İ | 1921'de iki kez kazanılan muharebelerin adı; İsmet Paşa'nın da soyadı | İnönü",
+    "J | Kırsal bölgelerde asayişi sağlayan köklü Türk güvenlik kuvveti | Jandarma",
+    "K | Atatürk'ün Büyük Taarruz'u yönettiği, Afyonkarahisar'daki tepe | Kocatepe",
+    "L | Yeni Türk devletinin bağımsızlığını dünyaya kabul ettiren, 24 Temmuz 1923'te imzalanan antlaşma | Lozan, Lozan Antlaşması",
+    "M | Sakarya zaferinin ardından Mustafa Kemal'e verilen en yüksek askerî rütbe | Mareşal",
+    "N | Atatürk'ün 1927'de okuduğu, Kurtuluş Savaşı'nı ve Cumhuriyet'in kuruluşunu anlatan büyük söylev | Nutuk",
+    "O | Cumhuriyet'ten önce bu topraklarda hüküm süren devlet | Osmanlı, Osmanlı Devleti, Osmanlı İmparatorluğu",
+    "P | Cumhuriyet'in ilan edildiği 29 Ekim 1923, haftanın hangi günüydü? | Pazartesi",
+    "R | 29 Ekim 1923'te Mustafa Kemal'in seçildiği görevin o dönemki adı (bugünkü Cumhurbaşkanı) | Reisicumhur, Reis-i Cumhur",
+    "S | 1 Kasım 1922'de TBMM kararıyla kaldırılan padişahlık yönetimi | Saltanat",
+    "Ş | 1925'te çıkarılan kanunla fesin yerine giyilmesi kabul edilen başlık | Şapka",
+    "T | Cumhuriyet'i ilan eden meclisin kısa adı | TBMM, Türkiye Büyük Millet Meclisi",
+    "Ü | İstiklal Marşı'nın bugün çalınan bestesinin sahibi Osman Zeki'nin soyadı | Üngör",
+    "V | Gençliğe Hitabe: \"Ey Türk gençliği! Birinci ...n, Türk istiklalini, Türk Cumhuriyetini ilelebet muhafaza ve müdafaa etmektir.\" (görev) | Vazife",
+    "Y | Kurtuluş Savaşı'nda Batı Cephesi'nde karşı savaşılan ordu | Yunan, Yunan ordusu",
+    "Z | Büyük Taarruz'un zaferle sonuçlandığı 30 Ağustos'ta kutlanan bayram | Zafer Bayramı, Zafer",
+  ],
+};
+
+// Metni sorulara çevirir ve kontrol eder: { questions, errors[], warnings[] }
+const parseQuestions = (text) => {
+  const questions = [];
+  const errors = [];
+  const warnings = [];
+  const seen = new Map();
+  text.split('\n').map((l) => l.trim()).filter(Boolean).forEach((line, i) => {
+    const parts = line.split('|').map((p) => p.trim());
+    if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) {
+      errors.push(`${i + 1}. satır "HARF | soru | cevaplar" biçiminde değil: ${line.slice(0, 60)}`);
+      return;
+    }
+    const letter = upper(parts[0]);
+    const answers = parts[2].split(',').map((a) => a.trim()).filter(Boolean);
+    const key = GROUP[letter] || letter;
+    if (!GAME_LETTERS.includes(key)) errors.push(`${i + 1}. satır: "${letter}" oyunda olan bir harf değil.`);
+    if (seen.has(key)) errors.push(`${letter} harfi iki kez var (${seen.get(key)}. ve ${i + 1}. satır).`);
+    seen.set(key, i + 1);
+    answers.forEach((a) => {
+      if (!upper(a).startsWith(letter)) warnings.push(`${letter}: "${a}" cevabı ${letter} ile başlamıyor.`);
+    });
+    questions.push({ letter, question_text: parts[1], answers });
+  });
+  const missing = GAME_LETTERS.filter((L) => !seen.has(L));
+  if (missing.length) errors.push(`Eksik harfler: ${missing.join(' ')}`);
+  return { questions, errors, warnings };
+};
+
+const showCheck = () => {
+  const { questions, errors, warnings } = parseQuestions($('fQuestions').value);
+  const parts = [];
+  if (errors.length) parts.push(`<div class="msg error">${errors.map(esc).join('<br>')}</div>`);
+  if (warnings.length) parts.push(`<div class="msg warn">${warnings.map(esc).join('<br>')}</div>`);
+  if (!errors.length) parts.push(`<div class="msg ok">${questions.length} soru hazır, tüm harfler tamam.</div>`);
+  if (questions.length) {
+    parts.push(`<table style="margin-top:12px;"><tr><th>Harf</th><th>Soru</th><th>Cevap</th></tr>${questions.map((q) => (
+      `<tr><td class="letter">${esc(q.letter)}</td><td>${esc(q.question_text)}</td><td class="ans">${esc(q.answers.join(', '))}</td></tr>`
+    )).join('')}</table>`);
+  }
+  $('check').innerHTML = parts.join('');
+  return { questions, errors };
+};
+
+const resetForm = () => {
+  ['fDay', 'fEmoji', 'fTitle', 'fChip', 'fSubtitle', 'fQuestions'].forEach((id) => { $(id).value = ''; });
+  $('fDay').disabled = false;
+  $('formTitle').textContent = 'Yeni özel gün';
+  $('cancelBtn').classList.add('hidden');
+  $('check').innerHTML = '';
+};
+
+const fillForm = (d) => {
+  $('fDay').value = d.day;
+  $('fEmoji').value = d.emoji || '';
+  $('fTitle').value = d.title || '';
+  $('fChip').value = d.chip || '';
+  $('fSubtitle').value = d.subtitle || '';
+  $('fQuestions').value = d.lines
+    ? d.lines.join('\n')
+    : (d.questions || []).map((q) => `${q.letter} | ${q.question_text} | ${(q.answers || []).join(', ')}`).join('\n');
+  showCheck();
+};
+
+const statusPill = (day) => {
+  const today = new Date();
+  const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  if (day === key) return '<span class="pill open">BUGÜN YAYINDA</span>';
+  if (day > key) return '<span class="pill wait">BEKLİYOR</span>';
+  return '<span class="pill past">GEÇTİ</span>';
+};
+
+let days = [];
+const loadList = async () => {
+  const snap = await getDocs(collection(db, 'SpecialDays'));
+  days = snap.docs.map((d) => ({ day: d.id, ...d.data() })).sort((a, b) => b.day.localeCompare(a.day));
+  if (!days.length) {
+    $('list').innerHTML = '<p class="hint">Henüz özel gün yok.</p>';
+    return;
+  }
+  $('list').innerHTML = `<table><tr><th>Tarih</th><th>Başlık</th><th>Soru</th><th>Durum</th><th></th></tr>${days.map((d) => (
+    `<tr><td>${esc(d.day)}</td><td>${esc(d.emoji || '')} ${esc(d.title || '')}</td><td>${(d.questions || []).length}</td>
+      <td>${statusPill(d.day)}</td>
+      <td class="row-actions"><button class="ghost" data-edit="${esc(d.day)}">Düzenle</button>
+      <button class="danger" data-del="${esc(d.day)}">Sil</button></td></tr>`
+  )).join('')}</table>`;
+};
+
+$('list').addEventListener('click', async (e) => {
+  const editDay = e.target?.dataset?.edit;
+  const delDay = e.target?.dataset?.del;
+  if (editDay) {
+    const d = days.find((x) => x.day === editDay);
+    fillForm(d);
+    $('fDay').disabled = true;
+    $('formTitle').textContent = `Düzenle: ${editDay}`;
+    $('cancelBtn').classList.remove('hidden');
+    $('fTitle').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  if (delDay && confirm(`${delDay} özel günü silinsin mi? O gün normal günlük test oynanır.`)) {
+    await deleteDoc(doc(db, 'SpecialDays', delDay));
+    await loadList();
+  }
+});
+
+$('previewBtn').addEventListener('click', showCheck);
+$('cancelBtn').addEventListener('click', resetForm);
+$('draftBtn').addEventListener('click', () => {
+  if ($('fQuestions').value.trim() && !confirm('Formdaki mevcut içerik taslakla değiştirilsin mi?')) return;
+  fillForm(DRAFT_29_EKIM);
+});
+
+$('saveBtn').addEventListener('click', async () => {
+  const day = $('fDay').value;
+  const title = $('fTitle').value.trim();
+  const { questions, errors } = showCheck();
+  const fail = (text) => { $('formMsg').innerHTML = `<div class="msg error">${esc(text)}</div>`; };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return fail('Tarih seçin.');
+  if (!title) return fail('Başlık girin.');
+  if (errors.length) return fail('Önce sorulardaki hataları düzeltin.');
+  const [y, m, d] = day.split('-').map(Number);
+  $('saveBtn').disabled = true;
+  try {
+    await setDoc(doc(db, 'SpecialDays', day), {
+      day,
+      title,
+      emoji: $('fEmoji').value.trim() || '🎉',
+      chip: $('fChip').value.trim() || title,
+      subtitle: $('fSubtitle').value.trim(),
+      // O günün 00:00'ı (Türkiye saatiyle girildiği varsayılır): bu saatten önce oyuncular okuyamaz
+      opensAt: Timestamp.fromDate(new Date(y, m - 1, d, 0, 0, 0)),
+      questions,
+      updatedAt: serverTimestamp(),
+      updatedBy: auth.currentUser?.uid || null,
+    });
+    $('formMsg').innerHTML = `<div class="msg ok">${esc(day)} kaydedildi. O gün 00:00'da yayına girer.</div>`;
+    resetForm();
+    await loadList();
+  } catch (err) {
+    fail('Kaydedilemedi: ' + err.message + (err.code === 'permission-denied' ? ' (Firestore kuralında SpecialDays bloğu yayınlandı mı?)' : ''));
+  } finally {
+    $('saveBtn').disabled = false;
+  }
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    $('gate').innerHTML = 'Bu sayfa için <a href="./" style="color:#93c5fd;">admin paneline giriş yap</a>.';
+    return;
+  }
+  try {
+    const snap = await getDoc(doc(db, 'Users', user.uid));
+    if (snap.data()?.role !== 'admin') {
+      $('gate').className = 'msg error';
+      $('gate').textContent = 'Bu hesabın admin yetkisi yok.';
+      return;
+    }
+  } catch (err) {
+    $('gate').className = 'msg error';
+    $('gate').textContent = 'Yetki kontrolü başarısız: ' + err.message;
+    return;
+  }
+  $('gate').classList.add('hidden');
+  $('panel').classList.remove('hidden');
+  try {
+    await loadList();
+  } catch (err) {
+    $('list').innerHTML = `<div class="msg error">Liste okunamadı: ${esc(err.message)}${err.code === 'permission-denied' ? ' — Firestore kuralında SpecialDays bloğu yayınlanmamış olabilir.' : ''}</div>`;
+  }
+});
+</script>
+</body>
+</html>
